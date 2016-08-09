@@ -262,7 +262,7 @@ public class MleApplicationView extends View
      * @param w The width to resize to.
      * @param h The height to resize to.
      * @param oldw The old width.
-     * @param pdlh The old height.
+     * @param oldh The old height.
      */ 
     @Override 
     protected void onSizeChanged(int w, int h, int oldw, int oldh) 

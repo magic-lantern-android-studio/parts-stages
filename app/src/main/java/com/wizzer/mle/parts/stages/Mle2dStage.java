@@ -197,7 +197,7 @@ public class Mle2dStage extends MleStage implements I2dStage
         // Not ready for rendering.
         m_ready = false;
         
-        // Set the aspect ration to be 1:1.
+        // Set the aspect ratio to be 1:1.
         m_aspect = MlScalar.ML_SCALAR_ONE;
         
         // Create the dirty bounding rectangle.

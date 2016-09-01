@@ -42,6 +42,9 @@ public class Mle3dStage extends MleStage implements I3dStage
         Context context = ((MleJ3dPlatformData)(MleTitle.getInstance().m_platformData)).m_context;
         //m_windowView = new MleGLES20ApplicationView(context,DEFAULT_STAGE_NAME,width,height);
         m_windowView = new MleGLES20ApplicationView(context);
+
+        // Set the stage.
+        g_theStage = this;
     }
 
     /**
@@ -74,7 +77,12 @@ public class Mle3dStage extends MleStage implements I3dStage
     @Override
     public synchronized void init() throws MleRuntimeException
     {
-        // Do nothing.
+        // ToDo: Insert resize callback into event dispatch manager.
+        // ToDo: Bump priority of dispatched callback.
+        // ToDo: Insert stage blitter (or off screen renderer if required) into the scheduler.
+        // ToDo: Show the window view.
+        // ToDO: Call local resize() to explicitly create the off screen buffer and pixelmaps.
+        //       This may be already handled by GLSurfaceView
     }
 
     /**
@@ -89,5 +97,27 @@ public class Mle3dStage extends MleStage implements I3dStage
 
         // Dispose of UI resources.
         m_windowView.dispose();
+    }
+
+    /**
+     * Resume the stage from a paused state.
+     */
+    public synchronized void resume()
+    {
+        m_windowView.onResume();
+
+        // Enable rendering.
+        m_ready = true;
+    }
+
+    /**
+     * Pause the stage.
+     */
+    public synchronized void pause()
+    {
+        m_windowView.onPause();
+
+        // Disable rendering.
+        m_ready = false;
     }
 }

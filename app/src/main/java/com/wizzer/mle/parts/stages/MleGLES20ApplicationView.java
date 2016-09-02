@@ -45,6 +45,8 @@ public class MleGLES20ApplicationView extends GLSurfaceView
         // Set OpenGL renderer.
         m_renderer = new GLES20Renderer();
         setRenderer(m_renderer);
+        // Only render when explicitly called to do so.
+        setRenderMode(RENDERMODE_WHEN_DIRTY);
     }
 
     /**

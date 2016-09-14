@@ -26,8 +26,7 @@ public abstract class GLRenderer implements Renderer
     }
 
     @Override
-    public void onSurfaceCreated(GL10 notUsed,
-                                 EGLConfig config)
+    public void onSurfaceCreated(GL10 notUsed, EGLConfig config)
     {
         if (GLES20Debug.DEBUG) {
             Log.i(GLES20Debug.LOG_TAG, "Surface created.");
@@ -35,21 +34,23 @@ public abstract class GLRenderer implements Renderer
         m_SurfaceCreated = true;
         m_Width = -1;
         m_Height = -1;
+
+        onSurfaceCreated();
     }
 
     @Override
-    public void onSurfaceChanged(GL10 notUsed, int width,
-                                 int height)
+    public void onSurfaceChanged(GL10 notUsed, int width, int height)
     {
-        if (!m_SurfaceCreated && width == m_Width
-                && height == m_Height) {
+        if (! m_SurfaceCreated && width == m_Width && height == m_Height) {
             if (GLES20Debug.DEBUG) {
                 Log.i(GLES20Debug.LOG_TAG,
                         "Surface changed but already handled.");
             }
             return;
         }
-        if (GLES20Debug.DEBUG) {
+
+        if (GLES20Debug.DEBUG)
+        {
             // Android honeycomb has an option to keep the
             // context.
             String msg = "Surface changed width:" + width
@@ -65,7 +66,7 @@ public abstract class GLRenderer implements Renderer
         m_Width = width;
         m_Height = height;
 
-        onCreate(m_Width, m_Height, m_SurfaceCreated);
+        onSurfaceChanged(m_Width, m_Height, m_SurfaceCreated);
         m_SurfaceCreated = false;
     }
 
@@ -74,7 +75,8 @@ public abstract class GLRenderer implements Renderer
     {
         onDrawFrame(m_FirstDraw);
 
-        if (GLES20Debug.DEBUG) {
+        if (GLES20Debug.DEBUG)
+        {
             m_FPS++;
             long currentTime = System.currentTimeMillis();
             if (currentTime - m_LastTime >= 1000) {
@@ -93,8 +95,9 @@ public abstract class GLRenderer implements Renderer
         return m_FPS;
     }
 
-    public abstract void onCreate(int width, int height,
-                                  boolean contextLost);
+    public abstract void onSurfaceCreated();
+
+    public abstract void onSurfaceChanged(int width, int height, boolean contextLost);
 
     public abstract void onDrawFrame(boolean firstDraw);
 }

@@ -1,15 +1,19 @@
 package com.wizzer.mle.parts.stages;
 
+import com.wizzer.mle.math.MlVector2;
 import com.wizzer.mle.parts.j3d.MleJ3dPlatformData;
 import com.wizzer.mle.parts.j3d.MleRenderEngine;
 import com.wizzer.mle.parts.j3d.stages.I3dStage;
 import com.wizzer.mle.runtime.MleTitle;
 import com.wizzer.mle.runtime.core.MleRuntimeException;
 import com.wizzer.mle.runtime.core.MleSet;
+import com.wizzer.mle.runtime.core.MleSize;
 import com.wizzer.mle.runtime.core.MleStage;
 import com.wizzer.mle.runtime.scheduler.MleTask;
 
 import android.content.Context;
+
+import java.util.Vector;
 
 /**
  * This class implements a simple Stage for 3D applications.
@@ -24,9 +28,50 @@ public class Mle3dStage extends MleStage implements I3dStage
     /** The application <code>GLSurfaceView</code> for the stage. */
     public MleGLES20ApplicationView m_windowView;
 
+    /** Registry of sets. */
+    public Vector<MleSet> m_sets;
+
+    /** Size of stage. */
+    protected MleSize m_size = null;
 
     // true when stage is ready for rendering.
     private boolean m_ready;
+
+    /**
+     * This inner class is used to render the stage.
+     */
+    protected class Mle3dStageRenderTask extends Thread
+    {
+        // The stage.
+        private Mle3dStage m_stage = null;
+
+        /**
+         * A constructor that initializes the stage to update
+         * by calling the associated GLSurfaceView.
+         */
+        public Mle3dStageRenderTask(Mle3dStage stage)
+        {
+            super();
+            m_stage = stage;
+        }
+
+        /**
+         * Execute the blit.
+         */
+        public void run()
+        {
+            // Skip this phase if the stage has not yet been established.
+            if (m_stage == null)
+                return;
+
+            // Skip this phase if the GLSurfaceView is currently not ready for rendering.
+            if (! m_stage.m_ready)
+                return;
+
+            // Call the GLSurfaceView to perform the render.
+            m_stage.m_windowView.render();
+        }
+    }
 
     /**
      * The default constructor.
@@ -42,6 +87,11 @@ public class Mle3dStage extends MleStage implements I3dStage
         Context context = ((MleJ3dPlatformData)(MleTitle.getInstance().m_platformData)).m_context;
         //m_windowView = new MleGLES20ApplicationView(context,DEFAULT_STAGE_NAME,width,height);
         m_windowView = new MleGLES20ApplicationView(context);
+        // And set the stage on the renderer.
+        m_windowView.m_renderer.setTheStage(this);
+
+        // Create a registry of sets that can be controlled and managed by the stage.
+        m_sets = new Vector<MleSet>();
 
         // Set the stage.
         g_theStage = this;
@@ -58,12 +108,16 @@ public class Mle3dStage extends MleStage implements I3dStage
     @Override
     public MleTask addSet(MleRenderEngine renderer, MleSet set)
     {
+        // Create a task for performing any rendering activity during the set phase.
         MleTask item = new MleTask(renderer);
         renderer.setCallData(this);
         renderer.setClientData(set);
 
         // Just pass this function on to the scheduler.
         MleTitle.getInstance().m_theScheduler.addTask(MleTitle.g_theSetPhase,item);
+
+        // Add the set to the registry.
+        m_sets.add(set);
 
         return item;
     }
@@ -79,7 +133,12 @@ public class Mle3dStage extends MleStage implements I3dStage
     {
         // ToDo: Insert resize callback into event dispatch manager.
         // ToDo: Bump priority of dispatched callback.
-        // ToDo: Insert stage blitter (or off screen renderer if required) into the scheduler.
+
+        // Insert stage render task into the scheduler.
+        Mle3dStageRenderTask render = new Mle3dStageRenderTask(this);
+        MleTask item = new MleTask(render, "3D Stage Renderer");
+        MleTitle.getInstance().m_theScheduler.addTask(MleTitle.g_theStagePhase,item);
+
         // ToDo: Show the window view.
         // ToDO: Call local resize() to explicitly create the off screen buffer and pixelmaps.
         //       This may be already handled by GLSurfaceView
@@ -119,5 +178,29 @@ public class Mle3dStage extends MleStage implements I3dStage
 
         // Disable rendering.
         m_ready = false;
+    }
+
+    /**
+     * Get the size of the stage.
+     *
+     * @return The size of the stage's component is returned.
+     * Magic Lantern 1.0 supports one component per stage: this is the
+     * default component size.
+     */
+    public synchronized MleSize getSize()
+    {
+        return m_size;
+    }
+
+    public synchronized void resize(int width, int height)
+    {
+        // Not ready for rendering.
+        m_ready = false;
+
+        // Store new values.
+        m_size = new MleSize(width, height);
+
+        // Ready for rendering.
+        m_ready = true;
     }
 }

@@ -56,4 +56,13 @@ public class MleGLES20ApplicationView extends GLSurfaceView
     {
         // Does nothing for now.
     }
+
+    /**
+     * Explicitly call for a request to render the <code>GLSurfaceView</code>
+     */
+    public void render()
+    {
+        // Request the GLSurfaceView to update rendering.
+        this.requestRender();
+    }
 }

@@ -4,7 +4,11 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 
 import com.wizzer.mle.parts.stages.Mle3dStage;
+import com.wizzer.mle.runtime.MleTitle;
 import com.wizzer.mle.runtime.core.MleSet;
+import com.wizzer.mle.runtime.core.MleSize;
+import com.wizzer.mle.runtime.event.IMleEventCallback;
+import com.wizzer.mle.runtime.event.MleEventManager;
 
 public class GLES20Renderer extends GLRenderer
 {
@@ -25,10 +29,10 @@ public class GLES20Renderer extends GLRenderer
     {
         GLES20.glClearColor(0f, 0f, 0f, 1f);
 
-        // Set the stage width and height.
-        m_theStage.resize(width, height);
-
-        // ToDo: Generate a resize event so that the sets can respond.
+        // A resize event occurred. Dispatch the resize event callbacks in immediate mode.
+        MleSize callData = new MleSize(width, height);
+        MleTitle.getInstance().m_theDispatcher.processEvent(MleEventManager.MLE_SIZE,
+            callData, IMleEventCallback.MLE_EVENT_IMMEDIATE);
     }
 
     @Override

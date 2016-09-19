@@ -1,14 +1,17 @@
 package com.wizzer.mle.parts.stages;
 
-import com.wizzer.mle.math.MlVector2;
 import com.wizzer.mle.parts.j3d.MleJ3dPlatformData;
 import com.wizzer.mle.parts.j3d.MleRenderEngine;
 import com.wizzer.mle.parts.j3d.stages.I3dStage;
 import com.wizzer.mle.runtime.MleTitle;
+import com.wizzer.mle.runtime.core.IMleCallbackId;
 import com.wizzer.mle.runtime.core.MleRuntimeException;
 import com.wizzer.mle.runtime.core.MleSet;
 import com.wizzer.mle.runtime.core.MleSize;
 import com.wizzer.mle.runtime.core.MleStage;
+import com.wizzer.mle.runtime.event.MleEvent;
+import com.wizzer.mle.runtime.event.MleEventCallback;
+import com.wizzer.mle.runtime.event.MleEventManager;
 import com.wizzer.mle.runtime.scheduler.MleTask;
 
 import android.content.Context;
@@ -38,6 +41,49 @@ public class Mle3dStage extends MleStage implements I3dStage
     private boolean m_ready;
 
     /**
+     * This inner class is used to process resize events.
+     */
+    protected class Mle3dStageResizeCallback extends MleEventCallback
+    {
+        /**
+         * The default constructor.
+         */
+        public Mle3dStageResizeCallback() {
+            super();
+            // Do nothing extra.
+        }
+
+        /**
+         * The callback dispatch method. This method is responsible for
+         * handling the <i>resize</i> event.
+         *
+         * @param event      The event that is being dispatched by the handler.
+         * @param clientData Client data registered with this handler.
+         * @return If the event is successfully dispatched, then <b>true</b> should be
+         * returned. Otherwise, <b>false</b> should be returned.
+         * @see com.wizzer.mle.runtime.event.IMleEventCallback#dispatch(com.wizzer.mle.runtime.event.MleEvent, java.lang.Object)
+         */
+        public boolean dispatch(MleEvent event, Object clientData) {
+            boolean result = true;
+
+            // Cast the client data to the stage being resized.
+            Mle3dStage theStage = (Mle3dStage) clientData;
+            // Get the width and height from the event call data.
+            MleSize newSize = (MleSize) event.getCallData();
+
+            try
+            {
+                theStage.resize((int)newSize.getWidth(), (int)newSize.getHeight());
+            } catch (MleRuntimeException ex)
+            {
+                result = false;
+            }
+
+            return result;
+        }
+    }
+
+    /**
      * This inner class is used to render the stage.
      */
     protected class Mle3dStageRenderTask extends Thread
@@ -56,7 +102,7 @@ public class Mle3dStage extends MleStage implements I3dStage
         }
 
         /**
-         * Execute the blit.
+         * Execute the scene graph rendering.
          */
         public void run()
         {
@@ -131,8 +177,18 @@ public class Mle3dStage extends MleStage implements I3dStage
     @Override
     public synchronized void init() throws MleRuntimeException
     {
-        // ToDo: Insert resize callback into event dispatch manager.
-        // ToDo: Bump priority of dispatched callback.
+        // Declare local variables.
+        IMleCallbackId cbId;
+
+        // Insert resize callback into event dispatch manager.
+        Mle3dStageResizeCallback resizeEventCB = new Mle3dStageResizeCallback();
+        cbId = MleTitle.getInstance().m_theDispatcher.installEventCB(
+                MleEventManager.MLE_SIZE, resizeEventCB, this);
+
+        // Bump priority of dispatched callback.
+        MleTitle.getInstance().m_theDispatcher.changeCBPriority(
+                MleEventManager.MLE_SIZE,cbId,
+                MleEventManager.MLE_RESIZE_STAGE_PRIORITY);
 
         // Insert stage render task into the scheduler.
         Mle3dStageRenderTask render = new Mle3dStageRenderTask(this);
@@ -192,13 +248,25 @@ public class Mle3dStage extends MleStage implements I3dStage
         return m_size;
     }
 
+    /**
+     * Resize the stage.
+     *
+     * @param width The new width of the stage.
+     * @param height The new height of the stage.
+     * @throws MleRuntimeException This exception is thrown if the stage can
+     * not be resized.
+     */
     public synchronized void resize(int width, int height)
+        throws MleRuntimeException
     {
         // Not ready for rendering.
         m_ready = false;
 
         // Store new values.
         m_size = new MleSize(width, height);
+
+        // Note: sets should receive their own notification on a resize event.
+        // Therefore the stage does not need to call a set's resize handler.
 
         // Ready for rendering.
         m_ready = true;

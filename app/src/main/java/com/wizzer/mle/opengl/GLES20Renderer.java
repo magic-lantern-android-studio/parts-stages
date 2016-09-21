@@ -1,10 +1,11 @@
 package com.wizzer.mle.opengl;
 
 import android.opengl.GLES20;
-import android.opengl.Matrix;
+import android.util.Log;
 
 import com.wizzer.mle.parts.stages.Mle3dStage;
 import com.wizzer.mle.runtime.MleTitle;
+import com.wizzer.mle.runtime.core.MleRuntimeException;
 import com.wizzer.mle.runtime.core.MleSet;
 import com.wizzer.mle.runtime.core.MleSize;
 import com.wizzer.mle.runtime.event.IMleEventCallback;
@@ -15,13 +16,13 @@ public class GLES20Renderer extends GLRenderer
     /* The associated 3D stage. */
     private Mle3dStage m_theStage;
 
-    public void setTheStage(Mle3dStage stage)
+    public synchronized void setTheStage(Mle3dStage stage)
     { m_theStage = stage; }
 
     @Override
     public void onSurfaceCreated()
     {
-         // Do nothing for now.
+         m_theStage.setReady(true);
     }
 
     @Override
@@ -38,15 +39,27 @@ public class GLES20Renderer extends GLRenderer
     @Override
     public void onDrawFrame(boolean firstDraw)
     {
+        if ((m_theStage == null) || (! m_theStage.isReady())) return;
+
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
-        if (m_theStage == null) return;
 
         // Invoke the sets on the stage to render themselves.
         for (int i  = 0; i < m_theStage.m_sets.size(); i++)
         {
             MleSet nextSet = m_theStage.m_sets.elementAt(i);
-            nextSet.render();
+
+            try {
+                // If the first time rendering, then initialize the set.
+                if (firstDraw)
+                    nextSet.initRender();
+
+                // Tell the set to render itself.
+                nextSet.render();
+            } catch (MleRuntimeException ex)
+            {
+                Log.e(MleTitle.DEBUG_TAG, ex.getMessage());
+            }
         }
     }
 }

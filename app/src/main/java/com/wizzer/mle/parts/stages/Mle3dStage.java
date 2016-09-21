@@ -127,7 +127,7 @@ public class Mle3dStage extends MleStage implements I3dStage
         super();
 
         // Not ready for rendering.
-        m_ready = false;
+        setReady(false);
 
         // Create the window component.
         Context context = ((MleJ3dPlatformData)(MleTitle.getInstance().m_platformData)).m_context;
@@ -135,6 +135,12 @@ public class Mle3dStage extends MleStage implements I3dStage
         m_windowView = new MleGLES20ApplicationView(context);
         // And set the stage on the renderer.
         m_windowView.m_renderer.setTheStage(this);
+
+        // Initialize the size of the stage. This will probably be overwritten by
+        // GLRenderer onSurfaceChanged event.
+        int width = ((MleJ3dPlatformData)(MleTitle.getInstance().m_platformData)).m_width;
+        int height = ((MleJ3dPlatformData)(MleTitle.getInstance().m_platformData)).m_height;
+        m_size = new MleSize(width,height);
 
         // Create a registry of sets that can be controlled and managed by the stage.
         m_sets = new Vector<MleSet>();
@@ -196,8 +202,9 @@ public class Mle3dStage extends MleStage implements I3dStage
         MleTitle.getInstance().m_theScheduler.addTask(MleTitle.g_theStagePhase,item);
 
         // ToDo: Show the window view.
-        // ToDO: Call local resize() to explicitly create the off screen buffer and pixelmaps.
-        //       This may be already handled by GLSurfaceView
+
+        // Call resize() to explicitly configure the stage default size.
+        //resize((int)m_size.getWidth(), (int)m_size.getHeight() );
     }
 
     /**
@@ -208,7 +215,7 @@ public class Mle3dStage extends MleStage implements I3dStage
             throws MleRuntimeException
     {
         // Disable rendering.
-        m_ready = false;
+        setReady(false);
 
         // Dispose of UI resources.
         m_windowView.dispose();
@@ -222,7 +229,7 @@ public class Mle3dStage extends MleStage implements I3dStage
         m_windowView.onResume();
 
         // Enable rendering.
-        m_ready = true;
+        setReady(true);
     }
 
     /**
@@ -233,8 +240,25 @@ public class Mle3dStage extends MleStage implements I3dStage
         m_windowView.onPause();
 
         // Disable rendering.
-        m_ready = false;
+        setReady(false);
     }
+
+    /**
+     * Set the readiness of the Stage for rendering 3D data.
+     *
+     * @param value If the <code>value</code> is <b>true</b>, then the Stage
+     * will be ready for rendering. Otherwise, if the <code>value</code>
+     * is <b>false</b>, then the Stage will not be ready for rendering.
+     */
+    public synchronized void setReady(boolean value) { m_ready = value; }
+
+    /**
+     * Check if the Stage is available for rendering.
+     *
+     * @return <b>true</b> is returned if the Stage is available for rendering.
+     * Otherwise, <b>false</b> will be returned.
+     */
+    public synchronized boolean isReady() { return m_ready; }
 
     /**
      * Get the size of the stage.
@@ -260,7 +284,7 @@ public class Mle3dStage extends MleStage implements I3dStage
         throws MleRuntimeException
     {
         // Not ready for rendering.
-        m_ready = false;
+        setReady(false);
 
         // Store new values.
         m_size = new MleSize(width, height);
@@ -269,6 +293,6 @@ public class Mle3dStage extends MleStage implements I3dStage
         // Therefore the stage does not need to call a set's resize handler.
 
         // Ready for rendering.
-        m_ready = true;
+        setReady(true);
     }
 }

@@ -22,14 +22,21 @@ public class GLES20Renderer extends GLRenderer
     @Override
     public void onSurfaceCreated()
     {
-         m_theStage.setReady(true);
+        // Set the background clear color to black.
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+        // Use culling to remove back faces.
+        GLES20.glEnable(GLES20.GL_CULL_FACE);
+
+        // Enable depth testing
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+
+        m_theStage.setReady(true);
     }
 
     @Override
     public void onSurfaceChanged(int width, int height, boolean contextLost)
     {
-        GLES20.glClearColor(0f, 0f, 0f, 1f);
-
         // A resize event occurred. Dispatch the resize event callbacks in immediate mode.
         MleSize callData = new MleSize(width, height);
         MleTitle.getInstance().m_theDispatcher.processEvent(MleEventManager.MLE_SIZE,
@@ -42,7 +49,6 @@ public class GLES20Renderer extends GLRenderer
         if ((m_theStage == null) || (! m_theStage.isReady())) return;
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-
 
         // Invoke the sets on the stage to render themselves.
         for (int i  = 0; i < m_theStage.m_sets.size(); i++)

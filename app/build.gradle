@@ -1,10 +1,13 @@
 apply plugin: 'com.android.library'
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.3"
+    compileSdkVersion 26
+    buildToolsVersion "28.0.3"
+
     defaultConfig {
         minSdkVersion 23
+        targetSdkVersion 26
     }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -19,10 +22,10 @@ android {
 }
 
 dependencies {
-    compile files('libs/mlert.jar')
-    compile files('libs/mlmath.jar')
-    compile files('libs/parts.jar')
-    testCompile 'junit:junit:4.12'
+    implementation files('libs/mlert.jar')
+    implementation files('libs/mlmath.jar')
+    implementation files('libs/parts.jar')
+    testImplementation 'junit:junit:4.12'
 }
 
 // Task to delete the old jar.
@@ -32,7 +35,7 @@ task deleteOldJar(type: Delete){
 
 // Task to export contents as jar.
 task exportJar(type: Copy){
-    from('build/intermediates/bundles/release/')
+    from('build/intermediates/packaged-classes/release/')
     into('release/')
     include('classes.jar')
     // Rename the jar.
